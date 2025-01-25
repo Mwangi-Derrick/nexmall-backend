@@ -2,14 +2,6 @@ const Joi = require("joi");
 const { Schema, model } = require("mongoose");
 
 const cartSchema = new Schema({
-    customer: {
-        type: new Schema({
-            name: String,
-             _id:String,
-            phone: String,
-        }),
-        required: true
-    },
     products: {
          type:[new Schema({
             name: String,
@@ -18,6 +10,10 @@ const cartSchema = new Schema({
             images: [String]
         })],
         required: true
+    },
+    totalQuantity: {
+        type: Number,
+        default:0
     },
     totalBill: {
         type: Number,
@@ -28,8 +24,8 @@ const Cart = model("Cart", cartSchema);
 
 function validate(cart) {
     const schema = Joi.object({
-        customerId: Joi.string().min(3).required(),
-        productId: Joi.string().min(3).required()
+        productId: Joi.string().min(3).required(),
+        quantity:Joi.number().integer().required()
     });
     return schema.validate(cart);
 }
