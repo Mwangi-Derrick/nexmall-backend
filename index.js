@@ -7,7 +7,6 @@ const subcategories = require('./routes/subcategories');
 const subsubcategories = require('./routes/subsubcategories');
 const products = require('./routes/products');
 const carts = require('./routes/carts');
-const customers = require('./routes/customers');
 const users = require('./routes/users');
 const auth = require('./routes/auth');
 const imageUpload = require('./routes/imageUpload');
@@ -27,7 +26,6 @@ app.use(express.json());
 app.use('/api/categories', categories)
 app.use('/api/products', products)
 app.use('/api/carts', carts)
-app.use('/api/customers', customers)
 app.use('/api/users', users)
 app.use('/api/auth', auth)
 app.use('/api/uploadImage', imageUpload)
