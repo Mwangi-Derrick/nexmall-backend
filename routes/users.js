@@ -2,8 +2,6 @@ const {User, validate} = require('../models/user.model');
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const config = require('config');
 const auth = require('../middleware/auth');
 
 router.get('/me',auth, async (req, res) => {
