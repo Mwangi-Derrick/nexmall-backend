@@ -28,30 +28,18 @@ exports.createOrder = async (req, res) => {
         console.error(error)
     }
 }
-
-const getAccessToken = async () => {
-  const consumerKey = "NexxbfupnSf3noMmzOxH1NLPt4B0PXy5E4oVY3VzP3GQ8Vn5";
-  const consumerSecret = "uYnufirGWH4KAZXVQi9VIuwOZWPxGeNB0oHHY2eYzt67Q0h6cUnJqXmC0GCuge2L";
-  const url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
+exports.getOrders = async (req, res) => {
   try {
-    const encodedCredentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64");
-    const headers = {
-      Authorization: `Basic ${encodedCredentials}`,
-      "Content-Type": "application/json",
-    };
-
-    const response = await fetch(url, { headers });
-    const data = await response.json();
-    return data.access_token;
+    const orders = await Order.find();
+    res.status(200).send(orders)
   } catch (error) {
-    console.error("Error getting access token:", error);
-    throw new Error("Failed to get access token.");
+    console.error(error)
   }
-};
+}
 
 exports.sendStkPush = async (req, res) => {
     try {
-      const token = await getAccessToken();
+      const token = req.token;//accessToken middleware
       const date = new Date();
       const timestamp =
         date.getFullYear() +
@@ -82,6 +70,7 @@ exports.sendStkPush = async (req, res) => {
       if (!phone || !/^254\d{9}$/.test(`254${phone}`)) {
         return res.status(400).send({ error: "Invalid phone number." });
       }
+      const userId = req.user._id.toString() // Get the user ID from the authenticated user
   
       const requestBody = {
         BusinessShortCode: shortCode,
@@ -92,8 +81,8 @@ exports.sendStkPush = async (req, res) => {
         PartyA: `254${phone}`,
         PartyB: shortCode,
         PhoneNumber: `254${phone}`,
-        CallBackURL: "https://yourwebsite.co.ke/callbackurl",
-        AccountReference: "account",
+        CallBackURL: `https://2de8-102-0-11-108.ngrok-free.app/api/orders/callback?userId=${userId}`,
+        AccountReference: userId,
         TransactionDesc: "test",
       };
   
@@ -112,4 +101,50 @@ exports.sendStkPush = async (req, res) => {
       res.status(500).send({ error: "Failed to process STK push request." });
     }
   };
-  
+
+  exports.handleMpesaCallback = async (req, res) => {
+    try {
+        console.log("Callback received:", req.body);
+
+        const { Body } = req.body;
+        if (!Body || !Body.stkCallback) {
+            console.error("Invalid callback payload:", req.body);
+            return res.status(400).send({ error: "Invalid callback payload." });
+        }
+
+        const resultCode = Body.stkCallback.ResultCode;
+        const resultDesc = Body.stkCallback.ResultDesc;
+
+        if (resultCode === 0) {
+            console.log("Transaction successful:", Body.stkCallback);
+            const transactionId = Body.stkCallback.CallbackMetadata.Item[1].Value
+          console.log(transactionId)
+          const userId = req.query.userId;
+          if (!userId) {
+            console.error("Missing userId in callback query.");
+            return res.status(400).send({ error: "Missing userId in callback query." });
+          }
+          console.log(userId)
+          // Save the successful transaction to the database or process accordingly
+          const order = await Order.findByIdAndUpdate(userId, {
+            transactionId: transactionId,
+            paymentStatus:"completed"
+          })
+          if (!order) {
+            console.error(`No order found for userId: ${userId}`);
+            return res.status(404).send({ error: "Order not found for the given userId." });
+          }
+          
+          await order.save();
+        } else {
+            console.log("Transaction failed:", resultDesc);
+            // Handle failed transaction
+        }
+
+        // Acknowledge receipt of the callback
+        res.status(200).send({ message: "Callback received successfully" });
+    } catch (error) {
+        console.error("Error in handleMpesaCallback:", error.message);
+        res.status(500).send({ error: "Failed to handle callback." });
+    }
+};
