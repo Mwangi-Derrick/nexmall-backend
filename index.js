@@ -13,7 +13,8 @@ const imageUpload = require('./routes/imageUpload');
 const imageDelete = require('./routes/imageDelete');
 const order = require('./routes/orders');
 const address = require('./routes/address');
-mongoose.connect(process.env.MONGO_URL).then(() => console.log('connected to mongodb'))
+mongoose.connect(process.env.MONGO_URL, {
+    autoIndex: true,}).then(() => console.log('connected to mongodb'))
     .catch(e=>{console.error(e)});
 
     if (!process.env.JWT_PRIVATE_KEY) {
