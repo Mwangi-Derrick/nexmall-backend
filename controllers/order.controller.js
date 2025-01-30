@@ -81,7 +81,7 @@ exports.sendStkPush = async (req, res) => {
         PartyA: `254${phone}`,
         PartyB: shortCode,
         PhoneNumber: `254${phone}`,
-        CallBackURL: `https://2de8-102-0-11-108.ngrok-free.app/api/orders/callback?userId=${userId}`,
+        CallBackURL: `https://nexmall-backend.onrender.com/api/orders/callback?userId=${userId}`,
         AccountReference: userId,
         TransactionDesc: "test",
       };
